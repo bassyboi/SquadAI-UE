@@ -1,0 +1,12 @@
+# Unreal Engine standard ignores
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+.vscode/
+# Plugin intermediates
+Plugins/*/Binaries/
+Plugins/*/Intermediate/
+# Ignore generated project files
+*.sln
+*.vcxproj*
