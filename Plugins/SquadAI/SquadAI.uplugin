@@ -1,0 +1,15 @@
+{
+    "FileVersion": 3,
+    "Version": 1,
+    "VersionName": "1.0",
+    "FriendlyName": "SquadAI",
+    "Description": "Squad-based AI plugin",
+    "Category": "Gameplay",
+    "Modules": [
+        {
+            "Name": "SquadAI",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        }
+    ]
+}
