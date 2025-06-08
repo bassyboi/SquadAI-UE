@@ -1,0 +1,19 @@
+{
+  "Name": "EQS_FindCover",
+  "Steps": [
+    {
+      "Generator": "NavmeshPoints",
+      "Radius": 1200
+    },
+    {
+      "Test": "TraceFromThreat",
+      "Weight": 3,
+      "Prefer": "Hidden"
+    },
+    {
+      "Test": "Distance",
+      "Weight": 1,
+      "PreferredRange": [400, 800]
+    }
+  ]
+}
