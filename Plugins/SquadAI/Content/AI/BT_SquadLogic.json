@@ -1,0 +1,53 @@
+{
+  "Type": "BehaviorTree",
+  "RootNode": {
+    "Class": "BTComposite_Selector",
+    "Children": [
+      {
+        "Class": "BTComposite_Sequence",
+        "Name": "ReactToFire",
+        "Decorators": [
+          {
+            "Class": "BTDecorator_Blackboard",
+            "BlackboardKey": "IsUnderFire",
+            "NotifyObserver": "ValueChange",
+            "ObservedKey": "IsUnderFire",
+            "Operation": "IsSet"
+          },
+          {
+            "Class": "BTDecorator_Cooldown",
+            "Cooldown": 3.0
+          }
+        ],
+        "Children": [
+          {
+            "Class": "BTTask_MoveTo",
+            "BlackboardKey": "ThreatLocation"
+          }
+        ]
+      },
+      {
+        "Class": "BTComposite_Sequence",
+        "Name": "NormalPatrol",
+        "Decorators": [
+          {
+            "Class": "BTDecorator_Blackboard",
+            "BlackboardKey": "IsUnderFire",
+            "Operation": "IsNotSet"
+          }
+        ],
+        "Children": [
+          {
+            "Class": "BTTask_MoveTo",
+            "BlackboardKey": "Waypoint"
+          },
+          {
+            "Class": "BTTask_Wait",
+            "RandomDeviation": 2.0,
+            "WaitTime": 2.0
+          }
+        ]
+      }
+    ]
+  }
+}

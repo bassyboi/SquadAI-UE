@@ -10,7 +10,8 @@ public class SquadAI : ModuleRules
         {
             "Core", "CoreUObject", "Engine",
             "AIModule",
-            "GameplayTasks"
+            "GameplayTasks",
+            "NavigationSystem"
         });
     }
 }
