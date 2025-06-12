@@ -1,65 +1,91 @@
 #include "SquadAIController.h"
-#include "BehaviorTree/BehaviorTree.h"
-#include "Perception/AIPerceptionComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "SquadSubsystem.h"
+#include "DrawDebugHelpers.h"
 
 ASquadAIController::ASquadAIController()
 {
-    PerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComp"));
-    SetPerceptionComponent(*PerceptionComp);
-}
-
-void ASquadAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
-{
-    for (AActor* Actor : UpdatedActors)
-    {
-        FAIStimulus Stimulus;
-        if (PerceptionComp->GetActorsPerception(Actor, Stimulus))
-        {
-            if (Stimulus.Tag == FName("Gunfire") && Stimulus.WasSuccessfullySensed())
-            {
-                HandleUnderFire(Stimulus);
-            }
-        }
-    }
+    PrimaryActorTick.bCanEverTick = true;
+    bAttachToPawn = true;
 }
 
 void ASquadAIController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
-    if (SquadBehaviour)
+
+    if (USquadSubsystem* Sub = GetWorld()->GetSubsystem<USquadSubsystem>())
     {
-        RunBehaviorTree(SquadBehaviour);
+        SquadId = Sub->RegisterSquadMember(this);
     }
-    if (PerceptionComp)
+
+    if (DefaultBT) RunBehaviorTree(DefaultBT);
+
+    if (UBlackboardComponent* BB = GetBlackboardComponent())
     {
-        PerceptionComp->OnPerceptionUpdated.AddDynamic(this, &ASquadAIController::OnPerceptionUpdated);
+        Keys.EnemyActor       = BB->GetKeyID("EnemyActor");
+        Keys.CoverLocation    = BB->GetKeyID("CoverLocation");
+        Keys.FormationSlot    = BB->GetKeyID("FormationSlot");
+        Keys.SuppressionValue = BB->GetKeyID("SuppressionValue");
     }
 }
 
-void ASquadAIController::FindAndMoveToCover(const FVector& ThreatLocation)
+void ASquadAIController::Tick(float Delta)
 {
-    // TODO: Implement EQS query to select best cover location
+    Super::Tick(Delta);
+
+    const float Now = GetWorld()->GetTimeSeconds();
+    if (Now >= NextFormationUpdateTime)
+    {
+        UpdateFormation(Now);
+        NextFormationUpdateTime = Now + FormationRecalcInterval;
+    }
+
+    DecaySuppression(Delta);
 }
 
-void ASquadAIController::HandleUnderFire(const FAIStimulus& Stimulus)
+void ASquadAIController::NotifyIncomingFire(const FVector& /*ShotDir*/)
 {
     if (UBlackboardComponent* BB = GetBlackboardComponent())
     {
-        BB->SetValueAsVector(BB_ThreatLoc, Stimulus.StimulusLocation);
-        BB->SetValueAsBool(BB_IsUnderFire, true);
+        const float Old = BB->GetValueAsFloat(Keys.SuppressionValue);
+        BB->SetValueAsFloat(Keys.SuppressionValue, FMath::Min(100.f, Old + 30.f));
     }
-    FindAndMoveToCover(Stimulus.StimulusLocation);
-    GetWorldTimerManager().SetTimerForNextTick([this]()
-    {
-        GetWorldTimerManager().SetTimer(ClearUnderFireHandle, this, &ASquadAIController::ClearUnderFire, 3.0f, false);
-    });
 }
 
-void ASquadAIController::ClearUnderFire()
+void ASquadAIController::DecaySuppression(float Delta)
 {
     if (UBlackboardComponent* BB = GetBlackboardComponent())
     {
-        BB->SetValueAsBool(BB_IsUnderFire, false);
+        const float Old = BB->GetValueAsFloat(Keys.SuppressionValue);
+        if (Old > 0.f)
+        {
+            BB->SetValueAsFloat(Keys.SuppressionValue,
+                                FMath::Max(0.f, Old - SuppressionDecayPerSecond * Delta));
+        }
+    }
+}
+
+void ASquadAIController::UpdateFormation(float /*Now*/)
+{
+    if (APawn* MyPawn = GetPawn())
+    {
+        if (UBlackboardComponent* BB = GetBlackboardComponent())
+        {
+            const int32 Slot = BB->GetValueAsInt(Keys.FormationSlot);
+            static const FVector Offsets[4] = {
+                {0.f,   0.f, 0.f},
+                {0.f, -300.f,0.f},
+                {0.f,  300.f,0.f},
+                {-300.f,0.f, 0.f}
+            };
+            const FVector Dest = MyPawn->GetActorLocation() + Offsets[Slot].RotateAngleAxis(
+                MyPawn->GetActorRotation().Yaw, FVector::UpVector);
+
+            MoveToLocation(Dest, 50.f);
+#if !(UE_BUILD_SHIPPING)
+            DrawDebugSphere(GetWorld(), Dest, 25.f, 8, FColor::Cyan, false, FormationRecalcInterval);
+#endif
+        }
     }
 }

@@ -1,38 +1,61 @@
 #pragma once
+
+#include "CoreMinimal.h"
 #include "AIController.h"
+#include "GameplayTagContainer.h"
 #include "Perception/AIPerceptionTypes.h"
-#include "Perception/AIPerceptionComponent.h"
-#include "BehaviorTree/BehaviorTree.h"
-#include "TimerManager.h"
 #include "SquadAIController.generated.h"
 
+/**
+ *  ASquadAIController
+ *  ───────────────────
+ *  • Owns the squad-wide blackboard (shared via tag "SquadId").
+ *  • Drives formation, suppression, and role-based ability usage.
+ *  • Delegates expensive ops (cover search, EQS) to BT services/tasks.
+ */
 UCLASS()
-class ASquadAIController : public AAIController
+class SQUADAI_API ASquadAIController : public AAIController
 {
-    GENERATED_BODY()
+GENERATED_BODY()
 
 public:
-    ASquadAIController();
+ASquadAIController();
+
+/** Returns the squad’s numeric ID (same for every pawn in a squad). */
+int32 GetSquadId() const { return SquadId; }
+
+/** Push incoming damage for suppression tracking. */
+void NotifyIncomingFire(const FVector& ShotDir);
 
 protected:
-    virtual void OnPossess(APawn* InPawn) override;
-    UFUNCTION()
-    void OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors);
+virtual void OnPossess(APawn* InPawn) override;
+virtual void Tick(float DeltaTime) override;
 
-    void FindAndMoveToCover(const FVector& ThreatLocation);
+/** Cached blackboard keys (avoids FName lookup every frame). */
+struct FBBKeys
+{
+uint8 EnemyActor;
+uint8 CoverLocation;
+uint8 FormationSlot;
+uint8 SuppressionValue;
+} Keys;
 
 private:
-    void HandleUnderFire(const FAIStimulus& Stimulus);
-    void ClearUnderFire();
+/* ---------- CONFIG (set in CDO / BP child) ---------- */
+UPROPERTY(EditDefaultsOnly, Category="Squad|Behaviour")
+class UBehaviorTree* DefaultBT = nullptr;
 
-    UPROPERTY(EditDefaultsOnly, Category = "AI")
-    UBehaviorTree* SquadBehaviour;
+UPROPERTY(EditDefaultsOnly, Category="Squad|Formation")
+float FormationRecalcInterval = 1.f;
 
-    UPROPERTY(VisibleAnywhere, Category = "AI")
-    UAIPerceptionComponent* PerceptionComp;
+UPROPERTY(EditDefaultsOnly, Category="Squad|Suppression")
+float SuppressionDecayPerSecond = 15.f;
 
-    FTimerHandle ClearUnderFireHandle;
+/* ---------- STATE ---------- */
+int32 SquadId = INDEX_NONE;
+float NextFormationUpdateTime = 0.f;
 
-    FName BB_ThreatLoc = "ThreatLocation";
-    FName BB_IsUnderFire = "IsUnderFire";
+/* ---------- HELPERS ---------- */
+void UpdateFormation(float Now);
+void DecaySuppression(float DeltaTime);
 };
