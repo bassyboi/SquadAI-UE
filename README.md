@@ -16,3 +16,17 @@ The plugin provides a custom `ASquadAIController` class intended to drive AI paw
 4. Launch the editor and enable the **SquadAI** plugin if necessary.
 
 For a detailed blueprint on structuring a plugin repository with Git and GitHub, see [SETUP_GUIDE.md](SETUP_GUIDE.md).
+
+## Building the Plugin
+
+The repository includes a small PowerShell script, `BuildAll.ps1`, that wraps
+Unreal's `RunUAT` automation tool. It packages the plugin so it can be dropped
+into any project. The script targets both Windows and Linux by default.
+
+```
+PS> ./BuildAll.ps1
+```
+
+After the command finishes you will find the packaged plugin under
+`Packages/SquadAI`. The generated archive contains builds for `Win64` and
+`Linux`, allowing you to test or distribute the plugin on either platform.
