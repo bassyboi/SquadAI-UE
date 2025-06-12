@@ -11,7 +11,8 @@ public class SquadAI : ModuleRules
             "Core", "CoreUObject", "Engine",
             "AIModule",
             "GameplayTasks",
-            "NavigationSystem"
+            "NavigationSystem",
+            "GameplayTags"
         });
     }
 }
