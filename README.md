@@ -21,12 +21,13 @@ For a detailed blueprint on structuring a plugin repository with Git and GitHub,
 
 The repository includes a small PowerShell script, `BuildAll.ps1`, that wraps
 Unreal's `RunUAT` automation tool. It packages the plugin so it can be dropped
-into any project. The script targets both Windows and Linux by default.
+into any project. The script targets only Windows by default and expects Unreal
+Engine to be installed under `C:\Program Files\Epic Games\UE_5.4` (override
+with the `-UE` parameter if needed).
 
 ```
 PS> ./BuildAll.ps1
 ```
 
 After the command finishes you will find the packaged plugin under
-`Packages/SquadAI`. The generated archive contains builds for `Win64` and
-`Linux`, allowing you to test or distribute the plugin on either platform.
+`Packages/SquadAI`. The generated archive contains a build for `Win64`.
