@@ -216,7 +216,7 @@ UE detects the plugin, prompts for a recompile (if binaries absent), and you’r
 | **Cover selection logic** | Implement EQS test that scores NavMesh points by distance & visibility to ThreatLocation      |
 | **Squad cohesion**        | Add `USquadManagerSubsystem` that issues compact formation MoveTo commands when not in combat |
 | **Network replication**   | Ensure decisions (e.g., selected cover) replicate via `RPC_ServerChooseCover`                 |
-| **Stress test**           | GitHub Action matrix build (Win64, Linux) + functional tests with Gauntlet                    |
+| **Stress test**           | GitHub Action build (Win64 only) + functional tests with Gauntlet                    |
 
 ---
 
